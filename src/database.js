@@ -21,14 +21,20 @@ export async function getPlantInfo(plantName) {
 // Save sensor reading
 export async function saveSensorData(userId, sensorType, value) {
   try {
+    // If userId is not a valid UUID format, get the sample user ID
+    let actualUserId = userId;
+    if (typeof userId === 'string' && userId.length < 36) {
+      actualUserId = await getSampleUserId();
+    }
+
     const { data, error } = await supabase
       .from('sensors')
       .insert({
-        user_id: userId,
+        user_id: actualUserId,
         sensor_type: sensorType,
         value: value
       });
-    
+
     if (error) throw error;
     return data;
   } catch (error) {
@@ -55,17 +61,41 @@ export async function getUserSensorData(userId) {
   }
 }
 
+// Get sample user ID (for demo purposes)
+export async function getSampleUserId() {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', 'john@farm.com')
+      .single();
+
+    if (error) throw error;
+    return data?.id;
+  } catch (error) {
+    console.error('Error getting sample user ID:', error);
+    // Return a default UUID if user not found
+    return '550e8400-e29b-41d4-a716-446655440000';
+  }
+}
+
 // Save chat message
 export async function saveChatMessage(userId, userMessage, aiResponse) {
   try {
+    // If userId is not a valid UUID format, get the sample user ID
+    let actualUserId = userId;
+    if (typeof userId === 'string' && userId.length < 36) {
+      actualUserId = await getSampleUserId();
+    }
+
     const { data, error } = await supabase
       .from('chats')
       .insert({
-        user_id: userId,
+        user_id: actualUserId,
         user_message: userMessage,
         ai_response: aiResponse
       });
-    
+
     if (error) throw error;
     return data;
   } catch (error) {

@@ -1,5 +1,5 @@
 // AI chatbot for farming advice using OpenRouter
-import { OPENROUTER_API_KEY } from '@env';
+const OPENROUTER_API_KEY = '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';
 
 // Ask AI about farming
 export async function askAI(question) {
@@ -11,7 +11,7 @@ export async function askAI(question) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-3.5-sonnet',
+        model: 'meta-llama/llama-3.1-8b-instruct',
         messages: [
           {
             role: 'system',

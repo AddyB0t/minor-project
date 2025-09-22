@@ -15,7 +15,7 @@ export async function askAI(question) {
         messages: [
           {
             role: 'system',
-            content: 'You are PAWA_Paglu, a helpful farming assistant. Give short, practical advice about crops, soil, water, and farming. Keep answers under 100 words.'
+            content: 'You are AgroAssist AI, a helpful farming assistant. Give short, practical advice about crops, soil, water, and farming. Keep answers under 100 words.'
           },
           {
             role: 'user',

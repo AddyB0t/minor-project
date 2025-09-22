@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getPlantInfo } from '../database';
-import DataTable from '../components/DataTable';
-import StatCard from '../components/StatCard';
+import DataTable from '../components/table/DataTable';
+import StatCard from '../components/cards/StatCard';
 
 const { width } = Dimensions.get('window');
 
@@ -129,6 +129,7 @@ export default function PlantsScreen() {
       key: 'name',
       label: 'Plant',
       width: 2,
+      minWidth: 120,
       render: (value, item) => (
         <View className="flex-row items-center">
           <Text className="text-lg mr-2">{item.emoji}</Text>
@@ -136,14 +137,15 @@ export default function PlantsScreen() {
         </View>
       )
     },
-    { key: 'category', label: 'Category', width: 1.5 },
-    { key: 'waterNeed', label: 'Water', width: 1.2 },
-    { key: 'sunlight', label: 'Sunlight', width: 1.5 },
-    { key: 'soilPh', label: 'Soil pH', width: 1.2 },
+    { key: 'category', label: 'Category', width: 1.5, minWidth: 100 },
+    { key: 'waterNeed', label: 'Water', width: 1.2, minWidth: 85 },
+    { key: 'sunlight', label: 'Sunlight', width: 1.5, minWidth: 100 },
+    { key: 'soilPh', label: 'Soil pH', width: 1.2, minWidth: 80 },
     {
       key: 'costPerAcre',
       label: 'Cost ($/acre)',
       width: 1.5,
+      minWidth: 110,
       render: (value) => (
         <Text className="font-semibold text-green-600">${value}</Text>
       )
@@ -152,6 +154,7 @@ export default function PlantsScreen() {
       key: 'status',
       label: 'Status',
       width: 1.5,
+      minWidth: 110,
       render: (value) => (
         <View className={`px-2 py-1 rounded-full ${
           value === 'Recommended' ? 'bg-green-100' :
@@ -180,32 +183,41 @@ export default function PlantsScreen() {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-gradient-to-br from-green-50 to-emerald-50">
-      <View className="p-6">
+    <ScrollView style={{ flex: 1, backgroundColor: '#F0FDF4' }}>
+      <View style={{ padding: 24 }}>
         {/* Header */}
-        <View className="mb-8">
-          <Text className="text-3xl font-bold text-gray-800 mb-2">🌱 Plant Database</Text>
-          <Text className="text-gray-600 text-lg">Comprehensive crop information and analytics</Text>
+        <View style={{ marginBottom: 32 }}>
+          <Text style={{ fontSize: 28, fontWeight: '700', color: '#1E293B', marginBottom: 8 }}>
+            🌱 Plant Database
+          </Text>
+          <Text style={{ fontSize: 16, color: '#64748B' }}>
+            Comprehensive crop information and analytics
+          </Text>
         </View>
 
         {/* Stats Cards */}
-        <View className="mb-8">
-          <Text className="text-xl font-semibold text-gray-700 mb-4">Farm Overview</Text>
-          <View className="grid grid-cols-2 gap-4">
+        <View style={{ marginBottom: 32 }}>
+          <Text style={{ fontSize: 20, fontWeight: '600', color: '#374151', marginBottom: 16 }}>
+            Farm Overview
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
             {stats.map((stat, index) => (
-              <StatCard
-                key={index}
-                title={stat.title}
-                value={stat.value}
-                icon={stat.icon}
-                color={stat.color}
-              />
+              <View key={index} style={{ width: '48%' }}>
+                <StatCard
+                  title={stat.title}
+                  value={stat.value}
+                  icon={stat.icon}
+                  color={index % 4 === 0 ? 'forest' : index % 4 === 1 ? 'sky' : index % 4 === 2 ? 'sunset' : 'ocean'}
+                  variant="solid"
+                  size="medium"
+                />
+              </View>
             ))}
           </View>
         </View>
 
         {/* Plants Table */}
-        <View className="mb-8">
+        <View style={{ marginBottom: 32 }}>
           <DataTable
             title="Crop Database"
             data={plantsData}
@@ -219,7 +231,16 @@ export default function PlantsScreen() {
 
         {/* Plant Details */}
         {plantInfo && (
-          <View className="bg-white rounded-2xl p-6 shadow-lg">
+          <View style={{
+            backgroundColor: 'white',
+            borderRadius: 16,
+            padding: 24,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 4
+          }}>
             <View className="flex-row items-center mb-6">
               <Text className="text-4xl mr-3">
                 {mockPlantsData.find(p => p.name === plantInfo.name)?.emoji}

@@ -1,6 +1,24 @@
 // AI chatbot for farming advice using OpenRouter
 import { OPENROUTER_API_KEY } from '@env';
 
+// Rate limiting to prevent API key flagging
+let lastApiCall = 0;
+const MIN_REQUEST_INTERVAL = 2000; // 2 seconds between requests
+
+function enforceRateLimit() {
+  const now = Date.now();
+  const timeSinceLastCall = now - lastApiCall;
+  
+  if (timeSinceLastCall < MIN_REQUEST_INTERVAL) {
+    const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastCall;
+    console.log(`[RATE_LIMIT] Waiting ${waitTime}ms before next API call`);
+    return new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastApiCall = now;
+  return Promise.resolve();
+}
+
 // Validate API key is available
 if (!OPENROUTER_API_KEY) {
   console.error('[CHATBOT] OPENROUTER_API_KEY not found in environment variables');
@@ -160,6 +178,9 @@ async function makeApiRequest(plantName, retryCount = 0) {
     validateEnvironmentVariables();
   }
   
+  // Enforce rate limiting to prevent flagging
+  await enforceRateLimit();
+  
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 25000);
   
@@ -169,7 +190,7 @@ async function makeApiRequest(plantName, retryCount = 0) {
       headers: {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://smart-agriculture-app.com',
+        'User-Agent': 'Smart-Agriculture-App/1.0',
         'X-Title': 'Smart Agriculture App'
       },
       body: JSON.stringify({
@@ -197,7 +218,9 @@ async function makeApiRequest(plantName, retryCount = 0) {
     clearTimeout(timeoutId);
     if (retryCount < 2) {
       console.log(`[AI] Retrying API request (attempt ${retryCount + 1}/3)`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Exponential backoff: 5s, then 15s to avoid flagging
+      const delay = retryCount === 0 ? 5000 : 15000;
+      await new Promise(resolve => setTimeout(resolve, delay));
       return makeApiRequest(plantName, retryCount + 1);
     }
     throw error;
@@ -281,11 +304,16 @@ export async function askAI(question) {
   try {
     validateEnvironmentVariables();
     
+    // Enforce rate limiting to prevent flagging
+    await enforceRateLimit();
+    
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
+        'User-Agent': 'Smart-Agriculture-App/1.0',
+        'X-Title': 'Smart Agriculture App'
       },
       body: JSON.stringify({
         model: 'meta-llama/llama-3.1-8b-instruct',

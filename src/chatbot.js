@@ -194,7 +194,7 @@ async function makeApiRequest(plantName, retryCount = 0) {
         'X-Title': 'Smart Agriculture App'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.1-8b-instruct',
+        model: 'openai/gpt-3.5-turbo',
         messages: [
           {
             role: 'system',
@@ -316,7 +316,7 @@ export async function askAI(question) {
         'X-Title': 'Smart Agriculture App'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.1-8b-instruct',
+        model: 'openai/gpt-3.5-turbo',
         messages: [
           {
             role: 'system',

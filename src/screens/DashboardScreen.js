@@ -27,20 +27,20 @@ export default function DashboardScreen() {
     ]).start();
   }, []);
 
-  // Mock sensor data
+  // Waiting for sensor data
   const sensorData = [
-    { sensor: 'Temperature', current: '24°C', min: '20°C', max: '28°C', status: 'Optimal', trend: 'stable' },
-    { sensor: 'Humidity', current: '65%', min: '60%', max: '70%', status: 'Good', trend: 'up' },
-    { sensor: 'Soil Moisture', current: '78%', min: '70%', max: '85%', status: 'Excellent', trend: 'stable' },
-    { sensor: 'Light Level', current: '85%', min: '75%', max: '90%', status: 'Optimal', trend: 'down' },
+    { sensor: 'Temperature', current: 'Waiting...', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },
+    { sensor: 'Humidity', current: 'Waiting...', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },
+    { sensor: 'Soil Moisture', current: 'Waiting...', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },
+    { sensor: 'Light Level', current: 'Waiting...', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },
   ];
 
-  // Mock recent activities
+  // Waiting for recent activities
   const recentActivities = [
-    { time: '10:30 AM', activity: 'Watering completed', type: 'Irrigation', status: 'Success' },
-    { time: '09:15 AM', activity: 'Temperature check', type: 'Monitoring', status: 'Normal' },
-    { time: '08:45 AM', activity: 'Soil pH measured', type: 'Analysis', status: 'Optimal' },
-    { time: '08:00 AM', activity: 'Light sensor calibrated', type: 'Maintenance', status: 'Completed' },
+    { time: '--', activity: 'Waiting for sensor activities...', type: 'System', status: 'Standby' },
+    { time: '--', activity: 'No recent irrigation data', type: 'Irrigation', status: 'Waiting' },
+    { time: '--', activity: 'No monitoring activities', type: 'Monitoring', status: 'Waiting' },
+    { time: '--', activity: 'No maintenance activities', type: 'Maintenance', status: 'Waiting' },
   ];
 
 
@@ -58,12 +58,16 @@ export default function DashboardScreen() {
         <View className={`px-2 py-1 rounded-full ${
           value === 'Optimal' ? 'bg-green-100' :
           value === 'Good' ? 'bg-blue-100' :
-          value === 'Excellent' ? 'bg-purple-100' : 'bg-gray-100'
+          value === 'Excellent' ? 'bg-purple-100' :
+          value === 'No Signal' ? 'bg-red-100' :
+          value === 'Waiting' ? 'bg-yellow-100' : 'bg-gray-100'
         }`}>
           <Text className={`text-xs font-semibold ${
             value === 'Optimal' ? 'text-green-600' :
             value === 'Good' ? 'text-blue-600' :
-            value === 'Excellent' ? 'text-purple-600' : 'text-gray-600'
+            value === 'Excellent' ? 'text-purple-600' :
+            value === 'No Signal' ? 'text-red-600' :
+            value === 'Waiting' ? 'text-yellow-600' : 'text-gray-600'
           }`}>
             {value}
           </Text>
@@ -85,12 +89,16 @@ export default function DashboardScreen() {
         <View className={`px-2 py-1 rounded-full ${
           value === 'Success' ? 'bg-green-100' :
           value === 'Normal' ? 'bg-blue-100' :
-          value === 'Completed' ? 'bg-purple-100' : 'bg-gray-100'
+          value === 'Completed' ? 'bg-purple-100' :
+          value === 'Standby' ? 'bg-yellow-100' :
+          value === 'Waiting' ? 'bg-orange-100' : 'bg-gray-100'
         }`}>
           <Text className={`text-xs font-semibold ${
             value === 'Success' ? 'text-green-600' :
             value === 'Normal' ? 'text-blue-600' :
-            value === 'Completed' ? 'text-purple-600' : 'text-gray-600'
+            value === 'Completed' ? 'text-purple-600' :
+            value === 'Standby' ? 'text-yellow-600' :
+            value === 'Waiting' ? 'text-orange-600' : 'text-gray-600'
           }`}>
             {value}
           </Text>

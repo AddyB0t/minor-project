@@ -1,5 +1,5 @@
 // AI chatbot for farming advice using OpenRouter
-const OPENROUTER_API_KEY = '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';
+const OPENROUTER_API_KEY = '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';
 
 // Ask AI about farming
 export async function askAI(question) {

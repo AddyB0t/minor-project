@@ -61,6 +61,45 @@ export async function getUserSensorData(userId) {
   }
 }
 
+// Add new plant to database
+export async function addPlantInfo(plantData) {
+  try {
+    const { data, error } = await supabase
+      .from('plants')
+      .insert({
+        name: plantData.name,
+        water_need: plantData.water_need,
+        sunlight: plantData.sunlight,
+        soil_ph: plantData.soil_ph,
+        cost_per_acre: plantData.cost_per_acre
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error adding plant:', error);
+    return null;
+  }
+}
+
+// Get all plants from database
+export async function getAllPlants() {
+  try {
+    const { data, error } = await supabase
+      .from('plants')
+      .select('*')
+      .order('name', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting all plants:', error);
+    return [];
+  }
+}
+
 // Get sample user ID (for demo purposes)
 export async function getSampleUserId() {
   try {

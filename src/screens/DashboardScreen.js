@@ -1,16 +1,144 @@
 // Dashboard screen for smart agriculture app
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Dimensions, Animated } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Dimensions, Animated, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import StatCard from '../components/cards/StatCard';
 import DataTable from '../components/table/DataTable';
+import supabase from '../supabase';
 
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen() {
   const navigation = useNavigation();
-  const fadeAnim = new Animated.Value(0);
-  const scaleAnim = new Animated.Value(0.8);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Sensor data state
+  const [sensorData, setSensorData] = useState([
+    { sensor: 'Temperature', current: 'Loading...', min: '--', max: '--', status: 'Loading', trend: 'waiting' },
+    { sensor: 'Humidity', current: 'Loading...', min: '--', max: '--', status: 'Loading', trend: 'waiting' },
+    { sensor: 'Soil Moisture', current: 'Loading...', min: '--', max: '--', status: 'Loading', trend: 'waiting' },
+    { sensor: 'Light Level', current: 'Loading...', min: '--', max: '--', status: 'Loading', trend: 'waiting' },
+  ]);
+
+  // Recent activities state
+  const [recentActivities, setRecentActivities] = useState([
+    { time: '--', activity: 'Loading sensor data...', type: 'System', status: 'Standby' },
+  ]);
+
+  // Fetch sensor data from Supabase
+  const fetchSensorData = async () => {
+    try {
+      // Get latest readings for each sensor type
+      const sensorTypes = ['temperature', 'humidity', 'soil_moisture', 'light_level'];
+      const newSensorData = [];
+      const activities = [];
+
+      for (const sensorType of sensorTypes) {
+        // Get latest 10 readings for this sensor
+        const { data, error } = await supabase
+          .from('sensors')
+          .select('*')
+          .eq('sensor_type', sensorType)
+          .order('reading_date', { ascending: false })
+          .limit(10);
+
+        if (error) {
+          console.error(`Error fetching ${sensorType}:`, error);
+          continue;
+        }
+
+        if (data && data.length > 0) {
+          const values = data.map(d => parseFloat(d.value));
+          const current = values[0];
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+
+          // Determine status based on sensor type and value
+          let status = 'Good';
+          let displayName = sensorType.charAt(0).toUpperCase() + sensorType.slice(1).replace('_', ' ');
+          let unit = '';
+
+          if (sensorType === 'temperature') {
+            displayName = 'Temperature';
+            unit = '°C';
+            if (current >= 20 && current <= 30) status = 'Optimal';
+            else if (current < 15 || current > 35) status = 'Warning';
+          } else if (sensorType === 'humidity') {
+            displayName = 'Humidity';
+            unit = '%';
+            if (current >= 60 && current <= 80) status = 'Optimal';
+            else if (current < 40 || current > 90) status = 'Warning';
+          } else if (sensorType === 'soil_moisture') {
+            displayName = 'Soil Moisture';
+            unit = '%';
+            if (current >= 60 && current <= 80) status = 'Optimal';
+            else if (current < 30) status = 'Warning';
+          } else if (sensorType === 'light_level') {
+            displayName = 'Light Level';
+            unit = ' lux';
+            if (current >= 10000 && current <= 50000) status = 'Excellent';
+            else if (current >= 1000) status = 'Good';
+          }
+
+          newSensorData.push({
+            sensor: displayName,
+            current: `${current.toFixed(1)}${unit}`,
+            min: `${min.toFixed(1)}${unit}`,
+            max: `${max.toFixed(1)}${unit}`,
+            status: status,
+            trend: values.length > 1 && values[0] > values[1] ? 'up' : 'down'
+          });
+
+          // Add to activities
+          const readingTime = new Date(data[0].reading_date);
+          activities.push({
+            time: readingTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            activity: `${displayName} reading: ${current.toFixed(1)}${unit}`,
+            type: 'Sensor',
+            status: status === 'Warning' ? 'Warning' : 'Success'
+          });
+        } else {
+          // No data for this sensor
+          let displayName = sensorType.charAt(0).toUpperCase() + sensorType.slice(1).replace('_', ' ');
+          newSensorData.push({
+            sensor: displayName,
+            current: 'No Data',
+            min: '--',
+            max: '--',
+            status: 'No Signal',
+            trend: 'waiting'
+          });
+        }
+      }
+
+      if (newSensorData.length > 0) {
+        setSensorData(newSensorData);
+      }
+
+      if (activities.length > 0) {
+        setRecentActivities(activities.slice(0, 4));
+      } else {
+        setRecentActivities([
+          { time: '--', activity: 'No sensor data yet. Connect Arduino!', type: 'System', status: 'Waiting' }
+        ]);
+      }
+
+    } catch (error) {
+      console.error('Error fetching sensor data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Pull to refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchSensorData();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     Animated.parallel([
@@ -25,23 +153,27 @@ export default function DashboardScreen() {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Initial fetch
+    fetchSensorData();
+
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel('sensors-changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sensors' }, (payload) => {
+        console.log('New sensor data:', payload);
+        fetchSensorData(); // Refresh data on new insert
+      })
+      .subscribe();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchSensorData, 30000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(interval);
+    };
   }, []);
-
-  // Waiting for sensor data
-  const sensorData = [
-    { sensor: 'Temperature', current: 'Waiting...', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },
-    { sensor: 'Humidity', current: 'Waiting...', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },
-    { sensor: 'Soil Moisture', current: 'Waiting...', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },
-    { sensor: 'Light Level', current: 'Waiting...', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },
-  ];
-
-  // Waiting for recent activities
-  const recentActivities = [
-    { time: '--', activity: 'Waiting for sensor activities...', type: 'System', status: 'Standby' },
-    { time: '--', activity: 'No recent irrigation data', type: 'Irrigation', status: 'Waiting' },
-    { time: '--', activity: 'No monitoring activities', type: 'Monitoring', status: 'Waiting' },
-    { time: '--', activity: 'No maintenance activities', type: 'Maintenance', status: 'Waiting' },
-  ];
 
 
   const sensorColumns = [
@@ -130,7 +262,12 @@ export default function DashboardScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: '#F8FAFC' }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#22C55E']} />
+      }
+    >
       <Animated.View
         style={{
           padding: 24,

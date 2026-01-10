@@ -194,7 +194,7 @@ async function makeApiRequest(plantName, retryCount = 0) {
         'X-Title': 'Smart Agriculture App'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo',
+        model: 'openai/gpt-4o',
         messages: [
           {
             role: 'system',
@@ -303,10 +303,10 @@ export async function getPlantInfoFromAI(plantName) {
 export async function askAI(question) {
   try {
     validateEnvironmentVariables();
-    
+
     // Enforce rate limiting to prevent flagging
     await enforceRateLimit();
-    
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -316,17 +316,41 @@ export async function askAI(question) {
         'X-Title': 'Smart Agriculture App'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo',
+        model: 'openai/gpt-4o',
         messages: [
           {
             role: 'system',
-            content: 'You are AgroAssist AI, a helpful farming assistant. Give short, practical advice about crops, soil, water, and farming. Keep answers under 100 words.'
+            content: `You are AgroAssist AI, an expert agricultural advisor with deep knowledge of:
+
+EXPERTISE AREAS:
+- Crop selection based on climate, soil, and weather conditions
+- Pest and disease management
+- Irrigation and water management
+- Soil health and fertilization
+- Seasonal farming practices
+- Climate-smart agriculture
+
+RESPONSE GUIDELINES:
+1. Give ACCURATE, scientifically-backed farming advice
+2. Consider the CONTEXT of the question (weather, season, region)
+3. For weather-related questions:
+   - Storm/Heavy Rain: Recommend drainage, avoid transplanting, protect seedlings
+   - Drought: Suggest drought-resistant crops (millets, sorghum, chickpea)
+   - Flooding: Advise rice only in paddies, otherwise avoid planting
+4. Always explain WHY you recommend something
+5. Keep answers concise (under 150 words) but complete
+6. If unsure, say so rather than guessing
+
+NEVER recommend crops unsuitable for the conditions asked about.
+For storms: Focus on protection, NOT planting new crops.`
           },
           {
             role: 'user',
             content: question
           }
-        ]
+        ],
+        temperature: 0.3,  // Lower temperature for more accurate responses
+        max_tokens: 300
       })
     });
 
@@ -341,7 +365,7 @@ export async function askAI(question) {
       console.error('[ENV] 3. Restart the development server');
       return 'AI chat is unavailable. Please check the console for setup instructions.';
     }
-    
+
     return 'Sorry, I could not get farming advice right now. Please try again later.';
   }
 }

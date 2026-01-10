@@ -2,101 +2,115 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Import screens (will be created next)
+// Import screens
 import DashboardScreen from '../screens/DashboardScreen';
 import ChatScreen from '../screens/ChatScreen';
 import PlantsScreen from '../screens/PlantsScreen';
 
 const Tab = createBottomTabNavigator();
 
+// Shadcn dark theme colors
+const colors = {
+  background: '#09090B',
+  card: '#18181B',
+  border: '#27272A',
+  text: '#FAFAFA',
+  textMuted: '#A1A1AA',
+  textDim: '#71717A',
+  primary: '#22C55E',
+};
+
 function SettingsScreen() {
   return (
-    <View className="flex-1 bg-gradient-to-br from-purple-50 to-pink-50 justify-center items-center">
-      <Text className="text-3xl">⚙️</Text>
-      <Text className="text-xl font-bold text-gray-800 mt-2">Settings</Text>
-      <Text className="text-gray-600 mt-1">Coming Soon!</Text>
-    </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>⚙️</Text>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: 8 }}>Settings</Text>
+        <Text style={{ fontSize: 15, color: colors.textMuted }}>Coming Soon!</Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
 export default function TabNavigator() {
-  const tabBarOptions = {
-    tabBarStyle: {
-      backgroundColor: 'white',
-      borderTopColor: '#E5E7EB',
-      borderTopWidth: 1,
-      paddingTop: 8,
-      paddingBottom: 8,
-      height: 70,
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      elevation: 5,
-    },
-    tabBarActiveTintColor: '#059669',
-    tabBarInactiveTintColor: '#9CA3AF',
-    tabBarLabelStyle: {
-      fontSize: 12,
-      fontWeight: '600',
-      marginTop: 4,
-    },
-    headerStyle: {
-      backgroundColor: '#059669',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 5,
-    },
-    headerTintColor: 'white',
-    headerTitleStyle: {
-      fontWeight: 'bold',
-      fontSize: 18,
-    },
-  };
-
   return (
-    <Tab.Navigator screenOptions={tabBarOptions}>
-      <Tab.Screen 
-        name="Dashboard" 
+    <Tab.Navigator
+      screenOptions={{
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          paddingTop: 8,
+          paddingBottom: 8,
+          height: 70,
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textDim,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 2,
+        },
+        headerStyle: {
+          backgroundColor: colors.card,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+        headerTintColor: colors.text,
+        headerTitleStyle: {
+          fontWeight: '600',
+          fontSize: 17,
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Dashboard"
         component={DashboardScreen}
         options={{
-          title: '🌾 Smart Farm',
+          title: 'Smart Farm',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>🏠</Text>
+            <Text style={{ fontSize: size }}>🏠</Text>
           ),
           tabBarLabel: 'Home',
         }}
       />
-      <Tab.Screen 
-        name="Chat" 
+      <Tab.Screen
+        name="Chat"
         component={ChatScreen}
         options={{
-          title: '🤖 AI Assistant',
+          title: 'AI Assistant',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>🤖</Text>
+            <Text style={{ fontSize: size }}>🤖</Text>
           ),
           tabBarLabel: 'AI Chat',
         }}
       />
-      <Tab.Screen 
-        name="Plants" 
+      <Tab.Screen
+        name="Plants"
         component={PlantsScreen}
         options={{
-          title: '🌱 Plant Database',
+          title: 'Plant Database',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>🌱</Text>
+            <Text style={{ fontSize: size }}>🌱</Text>
           ),
           tabBarLabel: 'Plants',
         }}
       />
-      <Tab.Screen 
-        name="Settings" 
+      <Tab.Screen
+        name="Settings"
         component={SettingsScreen}
         options={{
-          title: '⚙️ Settings',
+          title: 'Settings',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>⚙️</Text>
+            <Text style={{ fontSize: size }}>⚙️</Text>
           ),
           tabBarLabel: 'Settings',
         }}

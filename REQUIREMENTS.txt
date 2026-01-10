@@ -1,0 +1,305 @@
+================================================================================
+          SMART AGRICULTURE APP - PROJECT REQUIREMENTS & SETUP GUIDE
+================================================================================
+
+Project: Smart Agriculture Monitoring System
+Version: 1.0.0
+Description: React Native/Expo app with Arduino sensors and AI chatbot
+
+================================================================================
+                              SYSTEM REQUIREMENTS
+================================================================================
+
+1. Node.js (v18.0.0 or higher)
+   Download: https://nodejs.org/
+
+2. npm (comes with Node.js) or yarn
+
+3. Expo CLI
+   Install: npm install -g expo-cli
+
+4. Expo Go App (on your Android phone)
+   Download from Google Play Store
+
+5. Arduino IDE (v2.0 or higher)
+   Download: https://www.arduino.cc/en/software
+
+6. Git (optional, for version control)
+   Download: https://git-scm.com/
+
+================================================================================
+                           NPM DEPENDENCIES (App)
+================================================================================
+
+These are installed automatically with `npm install`:
+
+PRODUCTION DEPENDENCIES:
+------------------------
+@react-navigation/bottom-tabs    ^7.4.7      - Tab navigation
+@react-navigation/native         ^7.1.17     - Navigation core
+@react-navigation/native-stack   ^7.3.26     - Stack navigation
+@supabase/supabase-js            ^2.38.0     - Database (Supabase)
+expo                             ~54.0.0     - Expo SDK
+expo-linear-gradient             ^15.0.7     - Gradient backgrounds
+react                            19.1.0      - React core
+react-native                     0.81.4      - React Native core
+react-native-safe-area-context   ^5.6.1      - Safe area handling
+react-native-screens             ^4.16.0     - Native screen management
+react-native-dotenv              ^3.4.9      - Environment variables
+
+DEV DEPENDENCIES:
+-----------------
+@babel/core                      ^7.25.0     - JavaScript compiler
+babel-preset-expo                ~54.0.0     - Expo Babel preset
+tailwindcss                      3.3.2       - CSS framework (NativeWind)
+
+================================================================================
+                         NPM DEPENDENCIES (Server)
+================================================================================
+
+Install these in the project folder for the sensor server:
+
+express                          ^5.2.1      - Web server framework
+cors                             ^2.8.5      - Cross-origin requests
+serialport                       ^13.0.0     - Arduino serial communication
+
+Install command: npm install express cors serialport
+
+================================================================================
+                           ARDUINO LIBRARIES
+================================================================================
+
+Install via Arduino IDE (Sketch > Include Library > Manage Libraries):
+
+1. DHT sensor library by Adafruit (v1.4.4+)
+   - For DHT22 temperature/humidity sensor
+
+2. Adafruit Unified Sensor (v1.1.9+)
+   - Required dependency for DHT library
+
+3. BH1750 by Christopher Laws (v1.3.0+)
+   - For BH1750 light sensor
+
+4. ArduinoJson by Benoit Blanchon (v6.21+)
+   - For JSON data formatting
+
+================================================================================
+                         ENVIRONMENT VARIABLES
+================================================================================
+
+Create a `.env` file in the project root (copy from .env.example):
+
+# OpenRouter API Key (for AI chatbot)
+# Get free key at: https://openrouter.ai/keys
+OPENROUTER_API_KEY=sk-or-v1-your-api-key-here
+
+# Supabase Configuration (for database)
+# Get from: https://supabase.com/dashboard
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+
+================================================================================
+                           HARDWARE REQUIREMENTS
+================================================================================
+
+ARDUINO SETUP:
+--------------
+- Arduino Uno/Nano/Mega
+- DHT22 Temperature & Humidity Sensor
+- BH1750 Light Sensor (I2C)
+- Analog pH Sensor (connected to A0)
+- Soil Moisture Sensor (connected to A1)
+- USB Cable (for serial communication)
+
+WIRING:
+-------
+DHT22:
+  - VCC -> 5V
+  - GND -> GND
+  - DATA -> Digital Pin 2
+
+BH1750 (I2C):
+  - VCC -> 5V
+  - GND -> GND
+  - SDA -> A4
+  - SCL -> A5
+
+pH Sensor:
+  - VCC -> 5V
+  - GND -> GND
+  - Signal -> A0
+
+Soil Moisture:
+  - VCC -> 5V
+  - GND -> GND
+  - Signal -> A1
+
+================================================================================
+                          STEP-BY-STEP SETUP
+================================================================================
+
+STEP 1: Clone/Copy the Project
+------------------------------
+Copy the entire `minor-project` folder to your new laptop.
+
+STEP 2: Install Node.js Dependencies
+-------------------------------------
+Open terminal in the project folder:
+
+    cd "/path/to/minor-project"
+    npm install
+
+This installs all app dependencies from package.json.
+
+STEP 3: Install Server Dependencies
+------------------------------------
+    npm install express cors serialport
+
+STEP 4: Configure Environment Variables
+----------------------------------------
+    cp .env.example .env
+
+Edit `.env` and add your API keys:
+- Get OpenRouter key from: https://openrouter.ai/keys
+- Get Supabase credentials from: https://supabase.com/dashboard
+
+STEP 5: Upload Arduino Code
+---------------------------
+1. Open Arduino IDE
+2. Open: arduino/SmartAgri_Final.ino
+3. Install required libraries (see ARDUINO LIBRARIES section)
+4. Select your board (Tools > Board > Arduino Uno)
+5. Select your port (Tools > Port)
+6. Click Upload
+
+STEP 6: Configure Server Port
+-----------------------------
+Edit `server.js` and update SERIAL_PORT:
+
+    Windows: 'COM3' or 'COM4' (check Device Manager)
+    Linux:   '/dev/ttyUSB0' or '/dev/ttyACM0'
+    Mac:     '/dev/tty.usbmodem14101' or similar
+
+STEP 7: Find Your Computer's IP Address
+----------------------------------------
+    Windows: ipconfig (look for IPv4 Address)
+    Linux:   hostname -I
+    Mac:     ifconfig | grep inet
+
+STEP 8: Update App IP Address
+-----------------------------
+Edit `src/screens/DashboardScreen.js`:
+Change line 15:
+    const SENSOR_SERVER = 'http://YOUR_IP_ADDRESS:3001';
+
+Example:
+    const SENSOR_SERVER = 'http://192.168.1.101:3001';
+
+STEP 9: Start the Sensor Server
+-------------------------------
+In a terminal:
+
+    node server.js
+
+You should see:
+    =====================================
+       SENSOR DATA SERVER
+    =====================================
+    Server running on http://localhost:3001
+    Arduino connected on /dev/ttyUSB0
+
+STEP 10: Start the Expo App
+---------------------------
+In another terminal:
+
+    npx expo start
+
+Scan the QR code with Expo Go app on your phone.
+Make sure phone and laptop are on the same WiFi network!
+
+================================================================================
+                           TROUBLESHOOTING
+================================================================================
+
+ERROR: "Cannot find module 'express'"
+FIX: Run `npm install express cors serialport`
+
+ERROR: "Cannot open COM3" or serial port errors
+FIX: Check Arduino port in Arduino IDE (Tools > Port)
+     Update SERIAL_PORT in server.js
+
+ERROR: "Network request failed" in app
+FIX: Verify IP address is correct
+     Ensure phone and laptop are on same WiFi
+     Check firewall isn't blocking port 3001
+
+ERROR: "Missing environment variables"
+FIX: Create .env file from .env.example
+     Add your API keys
+     Restart Expo with `npx expo start --clear`
+
+ERROR: pH value showing wrong number
+FIX: Calibrate pH sensor with buffer solution
+     Adjust voltage_pH7 value in Arduino code
+
+================================================================================
+                              QUICK COMMANDS
+================================================================================
+
+# Install all dependencies
+npm install && npm install express cors serialport
+
+# Start sensor server
+node server.js
+
+# Start Expo app
+npx expo start
+
+# Clear Expo cache and start
+npx expo start --clear
+
+# Find available serial ports (after server starts)
+curl http://localhost:3001/ports
+
+# Check sensor data
+curl http://localhost:3001/sensors
+
+================================================================================
+                               PROJECT STRUCTURE
+================================================================================
+
+minor-project/
+├── App.js                      # App entry point
+├── package.json                # NPM dependencies
+├── server.js                   # Arduino data server
+├── .env                        # Environment variables (create this)
+├── .env.example                # Example environment file
+├── REQUIREMENTS.txt            # This file
+├── arduino/
+│   └── SmartAgri_Final.ino     # Arduino sensor code
+└── src/
+    ├── chatbot.js              # AI chatbot (OpenRouter API)
+    ├── supabase.js             # Database client
+    ├── components/
+    │   ├── cards/
+    │   │   └── StatCard.js     # Sensor stat cards
+    │   └── table/
+    │       └── DataTable.js    # Data table component
+    ├── navigation/
+    │   ├── AppNavigator.js     # Main navigator
+    │   └── TabNavigator.js     # Bottom tabs
+    └── screens/
+        ├── DashboardScreen.js  # Main dashboard
+        ├── ChatScreen.js       # AI chat screen
+        └── PlantsScreen.js     # Plant database
+
+================================================================================
+                              CONTACT & SUPPORT
+================================================================================
+
+For issues or questions, check:
+- Expo Docs: https://docs.expo.dev/
+- React Navigation: https://reactnavigation.org/docs/
+- Arduino Reference: https://www.arduino.cc/reference/
+
+================================================================================

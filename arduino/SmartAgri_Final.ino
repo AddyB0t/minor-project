@@ -1,6 +1,6 @@
 /*
  * SMART AGRICULTURE - FINAL CODE
- * All sensors combined, sends to app every 5 seconds
+ * All sensors combined, sends to server every 5 seconds
  *
  * SENSORS:
  * - DHT22: Temperature & Humidity
@@ -99,13 +99,13 @@ void loop() {
 void sendData() {
   Serial.print("{");
   Serial.print("\"temperature\":");
-  Serial.print(temperature, 1);
+  Serial.print(temperature, 2);
   Serial.print(",\"humidity\":");
-  Serial.print(humidity, 1);
+  Serial.print(humidity, 2);
   Serial.print(",\"soil_moisture\":");
-  Serial.print(soilMoisture, 1);
+  Serial.print(soilMoisture, 2);
   Serial.print(",\"light_level\":");
-  Serial.print(lightLevel, 0);
+  Serial.print(lightLevel, 2);
   Serial.print(",\"ph_value\":");
   Serial.print(phValue, 2);
   Serial.println("}");
@@ -248,6 +248,7 @@ void calculateSoilMoisture() {
  * light_level   → from BH1750 (lux)
  * ph_value      → from pH sensor
  *
- * Data is sent as JSON every 5 seconds.
- * Node.js server (server.js) reads this and serves to app.
+ * Data is sent as JSON every 5 seconds to Node.js server.
+ * App fetches from server every 5 minutes.
+ * Rounding to 1 decimal is done in the app.
  */

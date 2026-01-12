@@ -9,6 +9,9 @@ import DataTable from '../components/table/DataTable';
 
 const { width } = Dimensions.get('window');
 
+// Round to 1 decimal place (e.g., 9.35 → 9.4)
+const roundTo1Decimal = (value) => Math.round(value * 10) / 10;
+
 // Server URL - Arduino data comes through here
 // CHANGE THIS to your laptop's IP address!
 // Find it using: hostname -I (Linux) or ipconfig (Windows)
@@ -76,55 +79,61 @@ export default function DashboardScreen() {
       setConnected(true);
       const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-      // Process temperature
-      const temp = data.temperature;
+      // Process and round all values to 1 decimal place
+      const temp = roundTo1Decimal(data.temperature);
       const tempStatus = temp >= 20 && temp <= 30 ? 'Optimal' : temp < 15 || temp > 35 ? 'Warning' : 'Good';
 
-      // Process humidity
-      const hum = data.humidity;
+      const hum = roundTo1Decimal(data.humidity);
       const humStatus = hum >= 60 && hum <= 80 ? 'Optimal' : hum < 40 || hum > 90 ? 'Warning' : 'Good';
 
-      // Process soil moisture
-      const soil = data.soil_moisture;
+      const soil = roundTo1Decimal(data.soil_moisture);
       const soilStatus = soil >= 60 && soil <= 80 ? 'Optimal' : soil < 30 ? 'Warning' : 'Good';
 
-      // Process light level
-      const light = data.light_level;
+      const light = roundTo1Decimal(data.light_level);
       const lightStatus = light >= 10000 && light <= 50000 ? 'Excellent' : light >= 1000 ? 'Good' : 'Low';
 
-      // Process pH
-      const ph = data.ph_value;
+      const ph = roundTo1Decimal(data.ph_value);
+
+      // Round history min/max values
+      const tempMin = roundTo1Decimal(data.history?.temperature?.min || temp);
+      const tempMax = roundTo1Decimal(data.history?.temperature?.max || temp);
+      const humMin = roundTo1Decimal(data.history?.humidity?.min || hum);
+      const humMax = roundTo1Decimal(data.history?.humidity?.max || hum);
+      const soilMin = roundTo1Decimal(data.history?.soil_moisture?.min || soil);
+      const soilMax = roundTo1Decimal(data.history?.soil_moisture?.max || soil);
+      const lightMin = roundTo1Decimal(data.history?.light_level?.min || light);
+      const lightMax = roundTo1Decimal(data.history?.light_level?.max || light);
 
       const newSensorData = [
         {
           sensor: 'Temperature',
-          current: `${temp.toFixed(1)}°C`,
-          min: `${data.history?.temperature?.min?.toFixed(1) || temp.toFixed(1)}°C`,
-          max: `${data.history?.temperature?.max?.toFixed(1) || temp.toFixed(1)}°C`,
+          current: `${temp}°C`,
+          min: `${tempMin}°C`,
+          max: `${tempMax}°C`,
           status: tempStatus,
           trend: 'up'
         },
         {
           sensor: 'Humidity',
-          current: `${hum.toFixed(1)}%`,
-          min: `${data.history?.humidity?.min?.toFixed(1) || hum.toFixed(1)}%`,
-          max: `${data.history?.humidity?.max?.toFixed(1) || hum.toFixed(1)}%`,
+          current: `${hum}%`,
+          min: `${humMin}%`,
+          max: `${humMax}%`,
           status: humStatus,
           trend: 'up'
         },
         {
           sensor: 'Soil Moisture',
-          current: `${soil.toFixed(1)}%`,
-          min: `${data.history?.soil_moisture?.min?.toFixed(1) || soil.toFixed(1)}%`,
-          max: `${data.history?.soil_moisture?.max?.toFixed(1) || soil.toFixed(1)}%`,
+          current: `${soil}%`,
+          min: `${soilMin}%`,
+          max: `${soilMax}%`,
           status: soilStatus,
           trend: 'up'
         },
         {
           sensor: 'Light Level',
-          current: `${light.toFixed(0)} lux`,
-          min: `${data.history?.light_level?.min?.toFixed(0) || light.toFixed(0)} lux`,
-          max: `${data.history?.light_level?.max?.toFixed(0) || light.toFixed(0)} lux`,
+          current: `${light} lux`,
+          min: `${lightMin} lux`,
+          max: `${lightMax} lux`,
           status: lightStatus,
           trend: 'up'
         }
@@ -132,12 +141,12 @@ export default function DashboardScreen() {
 
       setSensorData(newSensorData);
 
-      // Update activities
+      // Update activities with rounded values
       setRecentActivities([
-        { time: now, activity: `Temperature: ${temp.toFixed(1)}°C`, type: 'Sensor', status: tempStatus === 'Warning' ? 'Warning' : 'Success' },
-        { time: now, activity: `Humidity: ${hum.toFixed(1)}%`, type: 'Sensor', status: humStatus === 'Warning' ? 'Warning' : 'Success' },
-        { time: now, activity: `Soil Moisture: ${soil.toFixed(1)}%`, type: 'Sensor', status: soilStatus === 'Warning' ? 'Warning' : 'Success' },
-        { time: now, activity: `pH Level: ${ph.toFixed(2)}`, type: 'Sensor', status: 'Success' },
+        { time: now, activity: `Temperature: ${temp}°C`, type: 'Sensor', status: tempStatus === 'Warning' ? 'Warning' : 'Success' },
+        { time: now, activity: `Humidity: ${hum}%`, type: 'Sensor', status: humStatus === 'Warning' ? 'Warning' : 'Success' },
+        { time: now, activity: `Soil Moisture: ${soil}%`, type: 'Sensor', status: soilStatus === 'Warning' ? 'Warning' : 'Success' },
+        { time: now, activity: `pH Level: ${ph}`, type: 'Sensor', status: 'Success' },
       ]);
 
     } catch (error) {
@@ -181,8 +190,8 @@ export default function DashboardScreen() {
     // Initial fetch
     fetchSensorData();
 
-    // Fetch every 5 seconds (matches Arduino send interval)
-    const interval = setInterval(fetchSensorData, 5000);
+    // Fetch every 5 minutes (300,000 ms)
+    const interval = setInterval(fetchSensorData, 300000);
 
     return () => clearInterval(interval);
   }, []);

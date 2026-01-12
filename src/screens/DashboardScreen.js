@@ -150,7 +150,7 @@ export default function DashboardScreen() {
       ]);
 
     } catch (error) {
-      console.error('Error fetching sensor data:', error);
+      // Server offline - fail silently, show "Server Off" in UI
       setSensorData([
         { sensor: 'Temperature', current: 'Server Off', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },
         { sensor: 'Humidity', current: 'Server Off', min: '--', max: '--', status: 'No Signal', trend: 'waiting' },

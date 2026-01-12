@@ -1,9 +1,9 @@
 // Modern Chat screen for farming questions - Dark Theme
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { askAI } from '../chatbot';
-import { saveChatMessage } from '../database';
+// Database is optional - chat works without it
 
 // Shadcn dark theme colors
 const colors = {
@@ -20,17 +20,68 @@ const colors = {
   aiBubble: '#27272A',
 };
 
+// Typewriter component for waterfall text effect
+const TypewriterText = ({ text, onComplete, style }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    if (!text) return;
+
+    let index = 0;
+    setDisplayedText('');
+    setIsComplete(false);
+
+    // Type word by word for smoother effect
+    const words = text.split(' ');
+    let currentText = '';
+
+    const interval = setInterval(() => {
+      if (index < words.length) {
+        currentText += (index === 0 ? '' : ' ') + words[index];
+        setDisplayedText(currentText);
+        index++;
+      } else {
+        clearInterval(interval);
+        setIsComplete(true);
+        onComplete && onComplete();
+      }
+    }, 50); // 50ms per word for smooth waterfall effect
+
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return (
+    <Text style={style}>
+      {displayedText}
+      {!isComplete && <Text style={{ opacity: 0.5 }}>|</Text>}
+    </Text>
+  );
+};
+
 export default function ChatScreen() {
   const [messages, setMessages] = useState([
     {
       type: 'ai',
       text: 'Hello! I\'m AgroAssist AI, your intelligent farming assistant. Ask me anything about crops, soil, weather, or farming techniques!',
-      timestamp: new Date()
+      timestamp: new Date(),
+      isTyping: false // Already displayed, no animation
     }
   ]);
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
+  const [typingIndex, setTypingIndex] = useState(-1); // Track which message is typing
   const scrollViewRef = useRef();
+
+  // Auto-scroll during typing
+  useEffect(() => {
+    if (typingIndex >= 0) {
+      const scrollInterval = setInterval(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+      return () => clearInterval(scrollInterval);
+    }
+  }, [typingIndex]);
 
   // Send question to AI
   const sendMessage = async () => {
@@ -50,16 +101,25 @@ export default function ChatScreen() {
     // Get AI response
     const aiResponse = await askAI(userMessage);
 
-    // Add AI response
-    const newAIMessage = { type: 'ai', text: aiResponse, timestamp: new Date() };
-    setMessages(prev => [...prev, newAIMessage]);
-
-    // Save to database
-    await saveChatMessage("demo-user", userMessage, aiResponse);
+    // Add AI response with typing animation
+    const newAIMessage = { type: 'ai', text: aiResponse, timestamp: new Date(), isTyping: true };
+    setMessages(prev => {
+      const newMessages = [...prev, newAIMessage];
+      setTypingIndex(newMessages.length - 1); // Set typing index to this message
+      return newMessages;
+    });
     setLoading(false);
 
     // Scroll to bottom again
     setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+  };
+
+  // Handle typing complete
+  const handleTypingComplete = (index) => {
+    setMessages(prev => prev.map((msg, i) =>
+      i === index ? { ...msg, isTyping: false } : msg
+    ));
+    setTypingIndex(-1);
   };
 
   const formatTime = (date) => {
@@ -135,12 +195,22 @@ export default function ChatScreen() {
                     borderColor: colors.border,
                   }}
                 >
-                  <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>
-                    {msg.text}
-                  </Text>
-                  <Text style={{ color: colors.textDim, fontSize: 11, marginTop: 6 }}>
-                    {formatTime(msg.timestamp)}
-                  </Text>
+                  {msg.isTyping ? (
+                    <TypewriterText
+                      text={msg.text}
+                      onComplete={() => handleTypingComplete(index)}
+                      style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}
+                    />
+                  ) : (
+                    <Text style={{ color: colors.text, fontSize: 15, lineHeight: 22 }}>
+                      {msg.text}
+                    </Text>
+                  )}
+                  {!msg.isTyping && (
+                    <Text style={{ color: colors.textDim, fontSize: 11, marginTop: 6 }}>
+                      {formatTime(msg.timestamp)}
+                    </Text>
+                  )}
                 </View>
               )}
             </View>
@@ -214,9 +284,9 @@ export default function ChatScreen() {
             />
             <TouchableOpacity
               onPress={sendMessage}
-              disabled={!question.trim() || loading}
+              disabled={!question.trim() || loading || typingIndex >= 0}
               style={{
-                backgroundColor: question.trim() && !loading ? colors.primary : colors.cardHover,
+                backgroundColor: question.trim() && !loading && typingIndex < 0 ? colors.primary : colors.cardHover,
                 width: 40,
                 height: 40,
                 borderRadius: 20,

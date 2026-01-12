@@ -355,8 +355,23 @@ For storms: Focus on protection, NOT planting new crops.`
     });
 
     const data = await response.json();
+
+    // Check for API errors
+    if (data.error) {
+      console.error('[AI] API Error:', data.error);
+      return `API Error: ${data.error.message || 'Unknown error'}`;
+    }
+
+    // Check if response has expected structure
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('[AI] Invalid response:', JSON.stringify(data));
+      return 'Received invalid response from AI. Please try again.';
+    }
+
     return data.choices[0].message.content;
   } catch (error) {
+    console.error('[AI] Chat error:', error.message);
+
     // Handle environment variable errors specifically
     if (error.message.includes('Missing environment variables')) {
       console.error('[ENV] Environment setup required for chat functionality:');
@@ -366,6 +381,6 @@ For storms: Focus on protection, NOT planting new crops.`
       return 'AI chat is unavailable. Please check the console for setup instructions.';
     }
 
-    return 'Sorry, I could not get farming advice right now. Please try again later.';
+    return `Error: ${error.message}. Check your internet connection.`;
   }
 }
